@@ -4,9 +4,13 @@ import Dropzone from "./Dropzone";
 
 const Upload = () => {
     const [selectedFile, setSelectedFile] = useState([]);
+    const [uploadProgress, setUploadProgress] = useState(0);
     const [uploadStatus, setUploadStatus] = useState('');
-    const handleFileChange = (event) => {
-        setSelectedFile(event.target.files[0]);
+
+    const handleFileChange = (file) => {
+        setSelectedFile(file);
+        setUploadProgress(0);
+        setUploadStatus('');
     }
 
     //handle file upload
@@ -16,21 +20,37 @@ const Upload = () => {
             return
         }
 
-        const formData = new FormData();
-        formData.append('file', selectedFile);
 
         try {
-            const response = await fetch('http://localhost:8000/upload/', {
-                method: 'POST',
-                body: formData,
-            });
+            const formData = new FormData();
+            formData.append('file', selectedFile);
 
-            if (response.ok) {
-                setUploadStatus('Upload Successful')
+            const xhr = new XMLHttpRequest();
+
+            xhr.upload.onprogress = (event) => {
+                if (event.lengthComputable) {
+                    const progress = Math.round((event.loaded * 100) / event.total);
+                    setUploadProgress(progress);
+                }
+            };
+
+            xhr.open('POST', 'http://localhost:8000/upload/');
+
+            xhr.onload = () => {
+                if (xhr.status == 200) {
+                    setUploadStatus('Upload Successful');
+                }
+                else {
+                    setUploadStatus('Upload Failed');
+                }
             }
-            else {
-                setUploadStatus('Upload Failed')
+
+            xhr.onerror = () => {
+                setUploadStatus('Error Occurred');
             }
+
+            xhr.send(formData);
+
         } catch (error) {
             setUploadStatus("Error Occured while Uploading");
             console.log("Upload Error:", error);
@@ -40,8 +60,16 @@ const Upload = () => {
         <div>
             <Navbar/>
             <div className="dropZoneContainer">
-                <h1 className="text-center">Drage and Drop Test</h1>
-                <Dropzone />
+                <h1 className="text-center">Upload Video</h1>
+                <Dropzone onFileSelected={handleFileChange}/>
+                {selectedFile && (
+                    <div>
+                        <p><strong>{selectedFile.name}</strong> - {selectedFile.size} bytes</p>
+                        <progress value={uploadProgress} max="100">{uploadProgress}</progress>
+                        <div>Status: {uploadStatus}</div>
+                    </div>
+                )}
+                <button onClick={handleUpload} disabled={!selectedFile}>Upload to S3</button>
             </div>
         </div>
     )

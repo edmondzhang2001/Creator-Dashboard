@@ -1,15 +1,20 @@
 import React from "react";
 import { useDropzone } from "react-dropzone";
+import { useState } from "react";
 import './Dropzone.css'
 
-function Dropzone({ open }) {
-    const { getRootProps, getInputProps, acceptedFiles } = useDropzone({});
-
-    const files = acceptedFiles.map((file) => (
-        <li key = {file.path}>
-            {file.path} - {file.size} bytes
-        </li>
-    ));
+function Dropzone({ onFileSelected }) {
+    const [fileList, setFileList] = useState([]);
+    const { getRootProps, getInputProps, open } = useDropzone({
+        onDrop: (acceptedFiles) => {
+            if (acceptedFiles.length > 0) {
+                onFileSelected(acceptedFiles[0]);
+            }
+        },
+        accept: 'video/*',
+        multiple: false,
+        noClick: true,
+    });
     return (
         <div className="container">
             <div {...getRootProps ({ className: "dropzone" })}>
@@ -19,9 +24,6 @@ function Dropzone({ open }) {
                     Click to select files
                 </button>
             </div>
-            <aside>
-                <ul>{files}</ul>
-            </aside>
         </div>
     )
 }
