@@ -7,6 +7,10 @@ const Upload = () => {
     const [uploadProgress, setUploadProgress] = useState(0);
     const [uploadStatus, setUploadStatus] = useState('');
 
+    // Default coverUrl and description
+    const defaultCoverUrl = "https://example.com/default-cover.jpg";
+    const defaultDescription = "This is the default description for the video.";
+
     const handleFileChange = (file) => {
         setSelectedFile(file);
         setUploadProgress(0);
@@ -24,6 +28,8 @@ const Upload = () => {
         try {
             const formData = new FormData();
             formData.append('file', selectedFile);
+            formData.append('coverUrl', defaultCoverUrl); //set default cover url
+            formData.append('description', defaultDescription); // set default description
 
             const xhr = new XMLHttpRequest();
 

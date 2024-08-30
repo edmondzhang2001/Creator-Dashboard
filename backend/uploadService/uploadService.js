@@ -5,6 +5,9 @@ const AWS = require('aws-sdk');
 const dotenv = require('dotenv');
 const path = require('path');
 const uuid = require('uuid').v4;
+const axios = require('axios');
+
+const GRAPH_API_VERSION = 'v20.0';
 
 dotenv.config();
 
@@ -17,6 +20,7 @@ const s3 = new AWS.S3({
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
     region: process.env.AWS_REGION
 })
+
 
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
@@ -42,7 +46,21 @@ app.post('/upload', upload.single('file'), (req, res) => {
         if (err) {
             return res.status(500).send(err);
         }
-        res.status(200).json({ url: data.Location });
+        const { description, coverUrl } = req.body;
+
+        try {
+            const response = axios.post('http://localhost:8001/post-reel/', {
+                videoUrl: data.Location,
+                description,
+                coverUrl,
+            })
+            res.status(200).json(response.data);
+        }
+        catch (err) {
+            res.status(500).json({error: err.message})
+        }
+
+        
     });
 });
 
