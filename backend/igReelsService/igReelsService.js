@@ -14,11 +14,15 @@ app.use(express.json());
 app.post('/post-reel', async(req, res) => {
     console.log("posting");
     try {
-        const {description, videoUrl, coverUrl} = req.body;
+        const {videoUrl, description, coverUrl} = req.body;
         const accessToken = process.env.IG_REELS_ACCESS_TOKEN;
         const igUserId = process.env.IG_USER_ID;
+
+        console.log(videoUrl);
         
         const {id: containerId} = await uploadReelsToContainer(accessToken, igUserId, description, videoUrl, coverUrl);
+
+        console.log("uploaded");
 
         let status = null;
         const TWO_MINUTES = 2 * 60 * 1000;
@@ -28,14 +32,21 @@ app.post('/post-reel', async(req, res) => {
             if (Date.now() - startTime > TWO_MINUTES) {
                 throw new Error('Upload took longer than 2 minutes.');
             }
+            if (status === 'ERROR') {
+                const errorDetails = await getErrorDetails(accessToken, containerId);
+                throw new Error(`Upload failed with status: ${status}. Details: ${errorDetails}`);
+            }
 
             status = await getStatusOfUpload(accessToken, containerId);
+            console.log(status);
             await new Promise((r) => setTimeout(r, 1000));
 
         }
         
         const { id:creationId } = await publishMedia(accessToken, containerId, igUserId);
+        console.log("media published")
         const { permalink } = await fetchPermaLink(accessToken, creationId);
+        console.log("got perma link")
 
         res.status(200).json({creationId, permalink});
     }
