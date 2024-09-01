@@ -1,9 +1,9 @@
 const db = require('../config/db');
 
-class user {
+class User {
     static async createUser(userName, email, passwordHash) {
         const [result] = await db.execute(
-            'INSERT INFO users (userName, email, password) VALUES (?, ?, ?)',
+            'INSERT INTO users (userName, email, password) VALUES (?, ?, ?)',
             [userName, email, passwordHash]
         );
         return result;
